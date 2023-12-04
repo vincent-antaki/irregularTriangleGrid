@@ -1,4 +1,4 @@
-let rectInfo = []
+
 let triangleInfo = []
 
 function setup(){
@@ -24,8 +24,6 @@ function setup(){
   gridDivsY = Math.floor(1/baseTriangleHeight);
   canvasHeight = gridDivsY*baseTriangleHeight*canvasSize+2*padding;
   
-  //console.log(gridDivsY,baseTriangleHeight,canvasSize,2*padding)
-  //console.log(w, canvasHeight)
   createCanvas(w, canvasHeight);
   
   //Create canvas
@@ -36,15 +34,7 @@ function setup(){
   console.log("baseTriangleHeight",baseTriangleHeight)
   console.log("distanceFromYVertex", distanceFromYVertex)
   console.log("YdistanceFromSideVertex", YdistanceFromSideVertex)      
-  console.log("XdistanceFromSideVertex", XdistanceFromSideVertex)
-  
-  
-  //Distance between triangle center 
-  //gridSpacingX = baseTriangleWidth/2
-  
-  //gridSpacingY = (w - padding*2)/gridDivsY;
-
-  
+  console.log("XdistanceFromSideVertex", XdistanceFromSideVertex)  
   
   // here we populate the 2d boolean array and corresponding center location
   bools = [];
@@ -56,7 +46,7 @@ function setup(){
     bools.push(column);
   }
 
-  // Since points are not regularly space - We use this array to keep track of triangle centers
+  // Since they are not regularly space - We use this array to keep track of triangle centers.
   // Padding is not taken into account here
   centers = [];
   for(let x = 0; x<gridDivsX; x++){
@@ -73,11 +63,10 @@ function setup(){
     centers.push(column);
   }
 
-  
-  // ComputeBaseTriangleInfotriangle
-  // computeBaseTriangleInfo()
+  triangleSizesConsidered = [1, 2, 3]
+  maxAttempts = 800
 
-  constructIrregularTriangleGrid_1([1, 2, 3])
+  constructIrregularTriangleGrid_1(triangleSizesConsidered, maxAttempts)
 
   background(0);
   stroke(255);
@@ -87,22 +76,17 @@ function setup(){
   markEmptySpots()
 }
 
-function makeRect(posX, posY, dimX, dimY){
-  this.posX = posX;
-  this.posY = posY;
-  this.dimX = dimX;
-  this.dimY = dimY;
-}
-
 function randomElement(arr){
   return arr[(Math.floor(Math.random() * arr.length))]
 }
 
 function is_triangle_inverted(i,j){
+  // Given a position (i,j) in our triangle grid, tells us if its pointing up or down.
   return ((i+j) %2) == 1
 }
 
-function getTriangleCoordinate(cx, cy, inverted, size){
+function getTriangleCoordinate(cx, cy, inverted, size, buffer){
+  size = size-buffer
   let [x1, x2, x3] = [cx-size/2, cx, cx+size/2]
 
   a = size/(2*cos(PI/6))
@@ -112,7 +96,7 @@ function getTriangleCoordinate(cx, cy, inverted, size){
   y1 = cy+sign*b 
   y3 = cy+sign*b 
   y2 = cy-sign*a
-  console.log('coordinates', [x1, y1, x2, y2, x3, y3])
+  //console.log('coordinates', [x1, y1, x2, y2, x3, y3])
   return [x1, y1, x2, y2, x3, y3]
   
 }
@@ -133,7 +117,6 @@ function computeBaseTriangleInfo(){
         y3 = cy+YdistanceFromSideVertex 
         y2 = cy-distanceFromYVertex
       }
-      //console.log(x1, y1, x2, y2, x3, y3)
       triangleInfo.push([x1, y1, x2, y2, x3, y3])
     }
   }
@@ -160,9 +143,10 @@ function enumerateBaseTriangle(i,j,size){
 }
 
 function getTriangleCenter(i, j, size){
-  // Like the function enumerateBaseTriangle, this functions assumes that i,j describes the
-  //
   /*
+  
+  Like the function enumerateBaseTriangle, this functions assumes that i,j describes the grid location of the top or bottom corner of a triangle of a given size.
+    
   h: total height of a triangle, b: distance between center and closest triangle edge, a = h-b
   here f(x) is the vertical delta between j and the center of a triangle of size s which has triangle i,j as a corner.
   
@@ -175,9 +159,9 @@ function getTriangleCenter(i, j, size){
   6 5 4b 3a | b + 3h
   7 6 4b 4a | 4h    
     7 6b 4a
+  
   */
   
-  // Returns the center of the triangle  
   [x, y] = centers[i][j] 
   sign = (1-is_triangle_inverted(i,j))*2-1
   offset = Math.ceil((size-1)/3)*2*YdistanceFromSideVertex+(size-1-Math.ceil((size-1)/3))*distanceFromYVertex
@@ -198,7 +182,7 @@ function getEmptyTriangles(){
   return empties
 }
 
-function constructIrregularTriangleGrid_1(sizesArr){
+function constructIrregularTriangleGrid_1(sizesArr, max_attempts){
   nattempts = 0
   ntriangles = 0
   while (bools.some(arr => arr.includes(1))){
@@ -229,11 +213,11 @@ function constructIrregularTriangleGrid_1(sizesArr){
           bools[positions[i][0]][positions[i][1]] = 0
         }
         let [cx, cy] = getTriangleCenter(x,y,size)
-        triangleInfo.push(getTriangleCoordinate(cx, cy, is_triangle_inverted(x, y) ,size*baseTriangleWidth))
+        triangleInfo.push(getTriangleCoordinate(cx, cy, is_triangle_inverted(x, y) ,size*baseTriangleWidth, 0.15*baseTriangleWidth))
         ntriangles += 1
       }
       nattempts +=1
-      if (nattempts == 800){
+      if (nattempts == max_attempts){
         break
       }
   }  
