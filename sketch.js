@@ -63,17 +63,20 @@ function setup(){
     centers.push(column);
   }
 
+  // Computing triangles info for the grid
+  //makeBaseTriangleGrid()
   triangleSizesConsidered = [1, 2, 3]
   maxAttempts = 800
-
   constructIrregularTriangleGrid_1(triangleSizesConsidered, maxAttempts)
 
+
+  // Draw
   background(0);
   stroke(255);
   strokeWeight(1);
   noFill()
   drawGrid()
-  markEmptySpots()
+  //markEmptySpots()
 }
 
 function randomElement(arr){
@@ -101,7 +104,7 @@ function getTriangleCoordinate(cx, cy, inverted, size, buffer){
   
 }
 
-function computeBaseTriangleInfo(){
+function makeBaseTriangleGrid(){
   for(let x = 0; x<gridDivsX; x++){
     for(let y = 0; y<gridDivsY; y++){
       is_inverted = is_triangle_inverted(x,y)
@@ -165,8 +168,6 @@ function getTriangleCenter(i, j, size){
   [x, y] = centers[i][j] 
   sign = (1-is_triangle_inverted(i,j))*2-1
   offset = Math.ceil((size-1)/3)*2*YdistanceFromSideVertex+(size-1-Math.ceil((size-1)/3))*distanceFromYVertex
-  console.log('size', Math.ceil((size-1)/3))
-  console.log('center', sign, offset, x, y)
   return [x, y+sign*offset]
 }
 
@@ -186,18 +187,21 @@ function constructIrregularTriangleGrid_1(sizesArr, max_attempts){
   nattempts = 0
   ntriangles = 0
   while (bools.some(arr => arr.includes(1))){
-      // random sample from empty
+      
+      // Take a random sample from a non-filled location
       let [x, y] = randomElement(getEmptyTriangles())
       size = random(sizesArr)
-      console.log(x, y, size)
       fits = true
-      // enumerate all positions
+      
+      // Enumerate all base positions covered by this potential triangle
       positions = enumerateBaseTriangle(x, y, size)
-      console.log(positions)
-      // check if within bounds
+      
+      // Check if within bounds
       if(positions.some(a => a[0]<0 | a[1]<0 | a[0]>=gridDivsX | a[1]>=gridDivsY)){
         fits = false
       }
+      
+      // Check if space is already occupied by a placed triangle
       if(fits){
         for(let i = 0; i < positions.length; i++){
           if (!bools[positions[i][0]][positions[i][1]]){            
